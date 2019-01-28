@@ -1,0 +1,5 @@
+/taskcat_outputs
+*~
+*.bak
+.DS_Store
+/.idea
