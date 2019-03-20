@@ -844,52 +844,52 @@ Mappings:
       Jvmheap: 12288m
   AWSRegionArch2AMI:
     ap-northeast-1:
-      HVM64: ami-0f1d85b07c31882ea
+      HVM64: ami-06cd52961ce9f0d85
       HVMG2: NOT_SUPPORTED
     ap-northeast-2:
-      HVM64: ami-01a46e3c12ac8011c
+      HVM64: ami-0a10b2721688ce9d2
       HVMG2: NOT_SUPPORTED
     ap-south-1:
-      HVM64: ami-0b9cd7abf3254b64c
+      HVM64: ami-0912f71e06545ad88
       HVMG2: NOT_SUPPORTED
     ap-southeast-1:
-      HVM64: ami-056dc8abc1ed49697
+      HVM64: ami-08569b978cc4dfa10
       HVMG2: NOT_SUPPORTED
     ap-southeast-2:
-      HVM64: ami-0b6ad971093488cad
+      HVM64: ami-09b42976632b27e9b
       HVMG2: NOT_SUPPORTED
     ca-central-1:
-      HVM64: ami-037f6ea48e6097200
+      HVM64: ami-0b18956f
       HVMG2: NOT_SUPPORTED
     eu-central-1:
-      HVM64: ami-09a5d997481284c19
+      HVM64: ami-0233214e13e500f77
       HVMG2: NOT_SUPPORTED
     eu-north-1:
-      HVM64: ami-0577a309473f8f7be
+      HVM64: ami-4abe3234
       HVMG2: NOT_SUPPORTED
     eu-west-1:
-      HVM64: ami-0d88aa02226b07c7f
+      HVM64: ami-047bb4163c506cd98
       HVMG2: NOT_SUPPORTED
     eu-west-2:
-      HVM64: ami-01cb38dba40524a0e
+      HVM64: ami-f976839e
       HVMG2: NOT_SUPPORTED
     eu-west-3:
-      HVM64: ami-0eb730899640548a5
+      HVM64: ami-0ebc281c20e89ba4b
       HVMG2: NOT_SUPPORTED
     sa-east-1:
-      HVM64: ami-0505e2dab93f3cfd1
+      HVM64: ami-07b14488da8ea02a0
       HVMG2: NOT_SUPPORTED
     us-east-1:
-      HVM64: ami-00a5ddb68e4fab0c0
+      HVM64: ami-0ff8a91507f77f867
       HVMG2: NOT_SUPPORTED
     us-east-2:
-      HVM64: ami-06304c886cac672d1
+      HVM64: ami-0b59bfac6be064b78
       HVMG2: NOT_SUPPORTED
     us-west-1:
-      HVM64: ami-02dad02e2749376e3
+      HVM64: ami-0bdb828fd58c52235
       HVMG2: NOT_SUPPORTED
     us-west-2:
-      HVM64: ami-06f43dd8f79841724
+      HVM64: ami-a0cfeed8
       HVMG2: NOT_SUPPORTED
   JIRAProduct2NameAndVersion:
     All:
@@ -964,6 +964,7 @@ Resources:
         - Key: Cluster
           Value: !Ref AWS::StackName
           PropagateAtLaunch: true
+
   ClusterNodeLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     DependsOn:
@@ -1036,6 +1037,8 @@ Resources:
                     - !Sub ["ATL_TOMCAT_REDIRECTPORT=${TomcatRedirectPort}", TomcatRedirectPort: !Ref TomcatRedirectPort]
                     - !Sub ["ATL_TOMCAT_SCHEME=${TomcatScheme}", TomcatScheme: !If [SSLScheme, https, http]]
                     - !Sub ["ATL_TOMCAT_SECURE=${TomcatSecure}", TomcatSecure: !If [SSLScheme, true, false]]
+                    - "ATL_PRODUCT=jira"
+                    - "ATL_APP_USER=jira"
                     - "ATL_APP_DATA_MOUNT_ENABLED=false"
                     - "ATL_DB_NAME=jira"
                     - "ATL_DB_USER=jira"
@@ -1095,40 +1098,26 @@ Resources:
               mode: "000750"
               owner: root
               group: root
+
           commands:
-            010_make_mount_point:
-              command: mkdir -p /media/atl
+            070_create_atl_dir:
+              test: "test ! -d /opt/atlassian/"
+              command: mkdir -p /opt/atlassian
               ignoreErrors: false
-            020_add_nfs_mount:
-              command:
-                !Join
-                  - ""
-                  -
-                    - "echo "
-                    - !If
-                      - UseHostedZone
-                      - !Ref EFSCname
-                      - !Sub
-                          - $(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone).${ElasticFileSystem}".efs."${Region}".amazonaws.com"
-                          - ElasticFileSystem: !Ref ElasticFileSystem
-                            Region: !Ref "AWS::Region"
-                    - ":/ /media/atl nfs4 rw,vers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0 >>/etc/fstab"
-              ignoreErrors: false
-            030_mount_all:
-              command: mount -a
+            071_install_git:
+              command: yum install -y git
               ignoreErrors: true
-            040_make_shared_home_dir:
-              command: mkdir -p /media/atl/jira/shared
-              ignoreErrors: false
-            050_ssm_group:
-              command: groupadd ssm-user --gid 400 || groupmod -g 400 ssm-user
-            051_ssm_user:
-              command: useradd ssm-user --uid 400 -g ssm-user || usermod -u 400 ssm-user
-            052_ensure_ssm:
-              command: yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+            072_clone_atl_scripts:
+              test: "test ! -d /opt/atlassian/atlassian-aws-deployment/"
+              # For development you can clone an explicit branch, e.g:
+              # command: git clone -b DCD-226-add-support-for-base-ami-templates https://bitbucket.org/atlassian/atlassian-aws-deployment.git /opt/atlassian/atlassian-aws-deployment
+              # FIXME: Should make the branch a parameter?
+              command: git clone https://bitbucket.org/atlassian/atlassian-aws-deployment.git /opt/atlassian/atlassian-aws-deployment
               ignoreErrors: true
-            090_bootstrap_local_ansible:
-              command: /tmp/bootstrap_local_ansible > /var/log/bootstrap_local_ansible.log 2>&1
+            080_run_atl_init_node:
+              command: cd /opt/atlassian/atlassian-aws-deployment/ami/scripts/bin && ./atl-init-node.sh
+              ignoreErrors: true
+
           services:
             sysvinit:
               cfn-hup:
@@ -1176,7 +1165,8 @@ Resources:
               - !Sub [" --resource ClusterNodeLaunchConfig --region ${Region}\n", Region: !Ref "AWS::Region"]
               - !Sub ["/opt/aws/bin/cfn-signal -e $? --stack ${StackName}", StackName: !Ref "AWS::StackName"]
               - !Sub [" --resource ClusterNodeLaunchConfig --region ${Region}", Region: !Ref "AWS::Region"]
-# Elastic file system
+
+  # Elastic file system
   ElasticFileSystem:
     Type: AWS::EFS::FileSystem
     Properties:
@@ -1353,6 +1343,7 @@ Resources:
     Properties:
       AliasName: !Sub "alias/${AWS::StackName}"
       TargetKeyId: !Ref EncryptionKey
+
 Outputs:
   ServiceURL:
     Description: The URL to access this Atlassian service
