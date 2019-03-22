@@ -1051,6 +1051,7 @@ Resources:
                     - "ATL_RELEASE_S3_BUCKET=atlassian-software"
                     - "ATL_RELEASE_S3_PATH=releases"
                     - "ATL_SSL_SELF_CERT_ENABLED=false"
+                    - "ATL_FORCE_INIT=true"
             /etc/cfn/cfn-hup.conf:
               content:
                 !Join
