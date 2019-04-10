@@ -16,6 +16,7 @@ Metadata:
       - Label:
           default: Cluster nodes
         Parameters:
+          - JiraClusterNodeRole
           - CloudWatchIntegration
           - ClusterNodeInstanceType
           - ClusterNodeMax
@@ -160,6 +161,8 @@ Metadata:
         default: Custom command-line parameters for Ansible
       ExportPrefix:
         default: ASI identifier
+      JiraClusterNodeRole:
+        default: Jira Cluster Node Role
       HostedZone:
         default: Route 53 Hosted Zone
       InternetFacingLoadBalancer:
@@ -507,6 +510,11 @@ Parameters:
     ConstraintDescription: Must be the name of an existing Route53 Hosted Zone.
     Description: The domain name of the Route53 PRIVATE Hosted Zone in which to create cnames
     Type: String
+  JiraClusterNodeRole:
+    Default: ''
+    Description: The role used for AutoScalingGroup profile.
+    Type: String
+    ConstraintDescription: Must be a valid role. For required policies please see the resource JiraClusterNodeRoleDefault.
   JiraProduct:
     Default: Software
     Description: The Jira product to install.
@@ -715,6 +723,7 @@ Resources:
         DeploymentAutomationCustomParams: !Ref 'DeploymentAutomationCustomParams'
         ExportPrefix: !Ref 'ExportPrefix'
         HostedZone: !Ref 'HostedZone'
+        JiraClusterNodeRole: !Ref 'JiraClusterNodeRole'
         InternetFacingLoadBalancer: !Ref 'InternetFacingLoadBalancer'
         JiraProduct: !Ref 'JiraProduct'
         JiraVersion: !Ref 'JiraVersion'
