@@ -58,6 +58,7 @@ Metadata:
       - Label:
           default: Advanced (Optional)
         Parameters:
+          - JiraClusterNodeRole
           - JiraDownloadUrl
           - LocalAnsibleGitRepo
           - LocalAnsibleGitSshKeyName
@@ -158,6 +159,8 @@ Metadata:
         default: Deployment Environment
       HostedZone:
         default: Route 53 Hosted Zone (optional)
+      JiraClusterNodeRole:
+        default: Jira Cluster Node Role
       JiraProduct:
         default: Jira Product *
       JiraVersion:
@@ -179,7 +182,7 @@ Metadata:
       PrivateSubnet2CIDR:
         default: AZ2 private IP address block
       PublicSubnet1CIDR:
-        default: AZ1 public IP address block        
+        default: AZ1 public IP address block
       PublicSubnet2CIDR:
         default: AZ2 public IP address block
       SSLCertificateARN:
@@ -478,6 +481,11 @@ Parameters:
     ConstraintDescription: Must be the name of an existing Route53 Hosted Zone.
     Description: The domain name of the Route53 PRIVATE Hosted Zone in which to create cnames
     Type: String
+  JiraClusterNodeRole:
+    Default: ''
+    Description: The role used for AutoScalingGroup profile.
+    Type: String
+    ConstraintDescription: Must be a valid role. For required policies please see the resource JiraClusterNodeRoleDefault.
   JiraDownloadUrl:
     Default: ''
     Description: This parameter is used to download a custom Jira version for testing purposes. Leave this parameter blank to automatically download the official version you specified earlier.
@@ -591,7 +599,7 @@ Parameters:
     Description: CIDR Block allowed to access the Atlassian product. This should be set to a trusted IP range; if you want to give public access use '0.0.0.0/0'.
     Type: String
   AvailabilityZones:
-    Description: 'List of Availability Zones to use for the subnets in the VPC. Note: You must specify 2 AZs here; 
+    Description: 'List of Availability Zones to use for the subnets in the VPC. Note: You must specify 2 AZs here;
       if more are specified only the first 2 will be used.'
     Type: List<AWS::EC2::AvailabilityZone::Name>
   PrivateSubnet1CIDR:
@@ -708,6 +716,7 @@ Resources:
         DBTimeBetweenEvictionRunsMillis: !Ref 'DBTimeBetweenEvictionRunsMillis'
         DeployEnvironment: !Ref 'DeployEnvironment'
         HostedZone: !Ref 'HostedZone'
+        JiraClusterNodeRole: !Ref 'JiraClusterNodeRole'
         JiraDownloadUrl: !Ref 'JiraDownloadUrl'
         JiraProduct: !Ref 'JiraProduct'
         JiraVersion: !Ref 'JiraVersion'
@@ -739,7 +748,7 @@ Outputs:
     Value: !GetAtt 'JiraDCStack.Outputs.LoadBalancerURL'
   BastionIP:
     Description: Bastion node IP (use as a jumpbox to connect to the nodes)
-    Value: !GetAtt 'VPCStack.Outputs.BastionPubIp'    
+    Value: !GetAtt 'VPCStack.Outputs.BastionPubIp'
   SGname:
     Description: The name of the SecurityGroup
     Value: !GetAtt 'JiraDCStack.Outputs.SGname'

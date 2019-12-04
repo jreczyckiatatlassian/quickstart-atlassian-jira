@@ -50,5 +50,9 @@
     {
         "ParameterKey": "KeyPairName",
         "ParameterValue": "replaced-by-taskcat-override-file"
+    },
+    {
+        "ParameterKey": "JiraClusterNodeRole",
+        "ParameterValue": "jira-server-ci"
     }
 ]
