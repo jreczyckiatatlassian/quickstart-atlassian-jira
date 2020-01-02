@@ -502,6 +502,7 @@ Parameters:
     AllowedValues: [true, false]
     ConstraintDescription: Must be 'true' or 'false'.
     Description: Controls whether the load balancer should be visible to the internet (true) or only within the VPC (false).
+    Type: String
   JiraProduct:
     Default: Software
     Description: The Jira product to install.
