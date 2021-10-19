@@ -1025,6 +1025,9 @@ Resources:
         - Key: "atl:quickstart:timestamp"
           Value: "TIMESTAMP: 20200119:22.41"
           PropagateAtLaunch: true
+        - Key: "business_unit"
+          Value: "JIRA Engineering"
+          PropagateAtLaunch: true
 
   ClusterNodeLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
